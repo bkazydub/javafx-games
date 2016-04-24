@@ -1,7 +1,5 @@
 package playground.game.chess.infrastructure;
 
-import playground.game.chess.Game;
-
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.List;
@@ -29,7 +27,7 @@ public abstract class ChessPiece implements Serializable {
         if (isMoveValid(row, col, pieces, true)) {
             this.row = row;
             this.col = col;
-            destroy(pieces);
+            capture(pieces);
             moved = true;
             return true;
         }
@@ -42,21 +40,16 @@ public abstract class ChessPiece implements Serializable {
         return this.color != another.color;
     }
 
-    public double getX() {
-        return col * Game.CELL_SIZE;
-    }
-
-    public double getY() {
-        return row * Game.CELL_SIZE;
-    }
-
     @Override
     public String toString() {
         return getClass().getSimpleName() + " row = " + row + ", col = " + col;
     }
 
-    // The method to be called after the move IS validated.
-    protected void destroy(List<ChessPiece> pieces) {
+    /**
+     * The method to be called after the move IS validated.
+     * Capture the piece - physically remove it from game.
+     */
+    protected void capture(List<ChessPiece> pieces) {
         Iterator<ChessPiece> iter = pieces.iterator();
         while (iter.hasNext()) {
             ChessPiece piece = iter.next();

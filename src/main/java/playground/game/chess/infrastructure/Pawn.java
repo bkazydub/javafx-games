@@ -15,6 +15,7 @@ public class Pawn extends ChessPiece {
         startRow = row;
     }
 
+    // todo: add en passant option
     @Override
     protected boolean isMoveValid(int row, int col, List<ChessPiece> pieces, boolean doesMovement) {
             if (Math.abs(col - this.col) == 1) {
@@ -67,19 +68,19 @@ public class Pawn extends ChessPiece {
             return false;
     }
 
-    public ChessPiece convertToRook() {
+    public ChessPiece promoteToRook() {
         return new Rook(color, row, col);
     }
 
-    public ChessPiece convertToKnight() {
+    public ChessPiece promoteToKnight() {
         return new Knight(color, row, col);
     }
 
-    public ChessPiece convertToBishop() {
+    public ChessPiece promoteToBishop() {
         return new Bishop(color, row, col);
     }
 
-    public ChessPiece convertToQueen() {
+    public ChessPiece promoteToQueen() {
         return new Queen(color, row, col);
     }
 

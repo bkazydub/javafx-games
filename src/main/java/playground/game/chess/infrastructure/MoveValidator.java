@@ -92,9 +92,9 @@ public class MoveValidator {
                     piece.highlighted = true;
                     notChecked = false;
                 }
-            } else {
+            } /*else {
                 piece.highlighted = false;
-            }
+            }*/
         }
         return notChecked;
     }
@@ -104,10 +104,8 @@ public class MoveValidator {
         while (iter.hasNext()) {
             ChessPiece piece = iter.next();
             if (selected == piece) continue;
-            if (!selected.isEnemy(piece) && piece.col == col && piece.row == row) {
-                return false;
-            } else
-                return true;
+            if (piece.col == col && piece.row == row)
+                return selected.isEnemy(piece);
         }
         return true;
     }

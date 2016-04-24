@@ -45,20 +45,26 @@ public class King extends ChessPiece {
                 Iterator<ChessPiece> iter = pieces.iterator();
                 while (iter.hasNext()) {
                     ChessPiece piece = iter.next();
-                    if (piece.row == this.row && (piece.col == this.col + 1 || piece.col == this.col + 2) && col > this.col) {
-                        return false;
-                    }
-                    if (piece.row == this.row && col < this.col &&
-                            (piece.col == this.col - 3 || piece.col == this.col - 2 || piece.col == this.col - 1)) {
-                        return false;
+                    if (piece.row == this.row) {
+                        if (col > this.col) {
+                            if (piece.col == this.col + 1 || piece.col == this.col + 2) return false;
+                        } else {
+                            if (piece.col == this.col - 3 || piece.col == this.col - 2 || piece.col == this.col - 1) return false;
+                        }
                     }
                     if (isEnemy(piece)) {
-                        for (int i = 1; i < 3; i++) {
-                            if (piece.isMoveValid(row, col + i, pieces, false)) return false;
+                        if (piece.isMoveValid(this.row, this.col + 1, pieces, false) && col > this.col) {
+                            System.out.println("castling failed. reason: " + piece);
+                            piece.highlighted = true;
+                            return false;
                         }
-                        for (int i = 1; i < 4; i++) {
-                            if (piece.isMoveValid(row, col - i, pieces, false)) return false;
+                        if (piece.isMoveValid(this.row, this.col - 1, pieces, false) && col < this.col) {
+                            System.out.println("castling failed. reason: " + piece);
+                            piece.highlighted = true;
+                            return false;
                         }
+                        // not sure if needed
+                        piece.highlighted = false;
                     }
                 }
 

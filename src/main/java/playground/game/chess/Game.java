@@ -38,13 +38,13 @@ public class Game extends Application {
     private Canvas pawnConversionCanvas;
     private GraphicsContext conversionGC;
 
-    /*private static final double CONVERSION_OPTION_OFFSET_X = 70;
-    private static final double CONVERSION_OPTION_OFFSET_Y = 70;
-    private static final double CONVERSION_OPTION_IMG_SIZE = 250;*/
+    /*private static final double PROMOTION_OPTION_OFFSET_X = 70;
+    private static final double PROMOTION_OPTION_OFFSET_Y = 70;
+    private static final double PROMOTION_OPTION_IMG_SIZE = 250;*/
 
-    private static final double CONVERSION_OPTION_OFFSET_X = 40;
-    private static final double CONVERSION_OPTION_OFFSET_Y = 40;
-    private static final double CONVERSION_OPTION_IMG_SIZE = 200;
+    private static final double PROMOTION_OPTION_OFFSET_X = 40;
+    private static final double PROMOTION_OPTION_OFFSET_Y = 40;
+    private static final double PROMOTION_OPTION_IMG_SIZE = 200;
 
     private static final double PIECE_IMG_WIDTH = 790 / 6;
     private static final double PIECE_IMG_HEIGHT = 264 / 2;
@@ -56,23 +56,23 @@ public class Game extends Application {
     private static final double KING_IMG_START_X = 1 + 4 * PIECE_IMG_WIDTH;
     private static final double PAWN_IMG_START_X = 1 + 5 * PIECE_IMG_WIDTH;
 
-    private static final Rectangle2D OPTION_ROOK_BOX = new Rectangle2D(CONVERSION_OPTION_OFFSET_X,
-            CONVERSION_OPTION_OFFSET_Y, CONVERSION_OPTION_IMG_SIZE, CONVERSION_OPTION_IMG_SIZE);
+    private static final Rectangle2D OPTION_ROOK_BOX = new Rectangle2D(PROMOTION_OPTION_OFFSET_X,
+            PROMOTION_OPTION_OFFSET_Y, PROMOTION_OPTION_IMG_SIZE, PROMOTION_OPTION_IMG_SIZE);
     private static final Rectangle2D OPTION_KNIGHT_BOX = new Rectangle2D(
-            CONVERSION_OPTION_OFFSET_X + CONVERSION_OPTION_IMG_SIZE, CONVERSION_OPTION_OFFSET_Y,
-            CONVERSION_OPTION_IMG_SIZE, CONVERSION_OPTION_IMG_SIZE);
-    private static final Rectangle2D OPTION_BISHOP_BOX = new Rectangle2D(CONVERSION_OPTION_OFFSET_X,
-            CONVERSION_OPTION_OFFSET_Y + CONVERSION_OPTION_IMG_SIZE, CONVERSION_OPTION_IMG_SIZE,
-            CONVERSION_OPTION_IMG_SIZE);
+            PROMOTION_OPTION_OFFSET_X + PROMOTION_OPTION_IMG_SIZE, PROMOTION_OPTION_OFFSET_Y,
+            PROMOTION_OPTION_IMG_SIZE, PROMOTION_OPTION_IMG_SIZE);
+    private static final Rectangle2D OPTION_BISHOP_BOX = new Rectangle2D(PROMOTION_OPTION_OFFSET_X,
+            PROMOTION_OPTION_OFFSET_Y + PROMOTION_OPTION_IMG_SIZE, PROMOTION_OPTION_IMG_SIZE,
+            PROMOTION_OPTION_IMG_SIZE);
     private static final Rectangle2D OPTION_QUEEN_BOX = new Rectangle2D(
-            CONVERSION_OPTION_OFFSET_X + CONVERSION_OPTION_IMG_SIZE,
-            CONVERSION_OPTION_OFFSET_Y + CONVERSION_OPTION_IMG_SIZE, CONVERSION_OPTION_IMG_SIZE,
-            CONVERSION_OPTION_IMG_SIZE);
+            PROMOTION_OPTION_OFFSET_X + PROMOTION_OPTION_IMG_SIZE,
+            PROMOTION_OPTION_OFFSET_Y + PROMOTION_OPTION_IMG_SIZE, PROMOTION_OPTION_IMG_SIZE,
+            PROMOTION_OPTION_IMG_SIZE);
 
     private final Image IMAGE_PIECES = new Image("img/pieces.png");
 
     private ChessPiece selectedPiece;
-    private Pawn toConvert;
+    private Pawn toPromote;
 
     public boolean whiteTurn = true;
 
@@ -90,7 +90,7 @@ public class Game extends Application {
 
         drawChessBoard();
         initChessPieces();
-        initPawnConversionLayer();
+        initPromotionLayer();
 
         root.getChildren().add(chessBoard);
         piecesCanvas = new Canvas(SCREEN_DIMENSION, SCREEN_DIMENSION);
@@ -99,33 +99,33 @@ public class Game extends Application {
         root.getChildren().add(pawnConversionCanvas);
         initController();
 
-        new AnimationTimer() {
+        AnimationTimer loop = new AnimationTimer() {
             @Override
             public void handle(long now) {
                 if (now - lastRefresh < 200_000_000)
                     return;
                 lastRefresh = now;
                 piecesGC.clearRect(0, 0, SCREEN_DIMENSION, SCREEN_DIMENSION);
+                //boardGC.clearRect(0, 0, SCREEN_DIMENSION, SCREEN_DIMENSION);
+                drawChessBoard();
 
-                synchronized (pieces) {
-
-                    for (ChessPiece piece : pieces) {
-                        if (piece == selectedPiece) {
-                            boardGC.clearRect(0, 0, SCREEN_DIMENSION, SCREEN_DIMENSION);
-                            drawChessBoard();
-                            boardGC.setFill(Color.MEDIUMVIOLETRED);
-                            boardGC.fillOval(piece.getX(), piece.getY(), CELL_SIZE, CELL_SIZE);
-                        }
-                        boardGC.setFill(Color.INDIANRED);
-                        if (piece.isHighlighted()) {
-                            boardGC.fillRect(piece.getX(), piece.getY(), CELL_SIZE, CELL_SIZE);
-                            piece.setHighlighted(false);
-                        }
-                        drawPiece(piece);
+                for (ChessPiece piece : pieces) {
+                    if (piece == selectedPiece) {
+                        //boardGC.clearRect(0, 0, SCREEN_DIMENSION, SCREEN_DIMENSION);
+                        //drawChessBoard();
+                        boardGC.setFill(Color.MEDIUMVIOLETRED);
+                        boardGC.fillRect(getPieceX(piece), getPieceY(piece), CELL_SIZE, CELL_SIZE);
                     }
+                    if (piece.isHighlighted()) {
+                        boardGC.setFill(Color.INDIANRED);
+                        boardGC.fillRect(getPieceX(piece), getPieceY(piece), CELL_SIZE, CELL_SIZE);
+                    }
+                    drawPiece(piece);
                 }
             }
-        }.start();
+        };
+
+        loop.start();
 
         stage.setTitle("When You Play the Game of Chess You Win or You Don't.");
         stage.show();
@@ -169,7 +169,15 @@ public class Game extends Application {
         return new Rectangle2D(piece.getCol() * Game.CELL_SIZE, piece.getRow() * Game.CELL_SIZE, Game.CELL_SIZE, Game.CELL_SIZE);
     }
 
-    private void initPawnConversionLayer() {
+    private static double getPieceX(ChessPiece piece) {
+        return piece.getCol() * CELL_SIZE;
+    }
+
+    private static double getPieceY(ChessPiece piece) {
+        return piece.getRow() * CELL_SIZE;
+    }
+
+    private void initPromotionLayer() {
         pawnConversionCanvas = new Canvas(SCREEN_DIMENSION, SCREEN_DIMENSION);
         pawnConversionCanvas.setVisible(false);
         pawnConversionCanvas.setOpacity(0.8);
@@ -179,39 +187,39 @@ public class Game extends Application {
         pawnConversionCanvas.setOnMouseClicked(e -> {
             double x = e.getX(), y = e.getY();
             if (OPTION_ROOK_BOX.contains(x, y)) {
-                pieces.add(toConvert.convertToRook());
+                pieces.add(toPromote.promoteToRook());
             } else if (OPTION_KNIGHT_BOX.contains(x, y)) {
-                pieces.add(toConvert.convertToKnight());
+                pieces.add(toPromote.promoteToKnight());
             } else if (OPTION_BISHOP_BOX.contains(x, y)) {
-                pieces.add(toConvert.convertToBishop());
+                pieces.add(toPromote.promoteToBishop());
             } else if (OPTION_QUEEN_BOX.contains(x, y)) {
-                pieces.add(toConvert.convertToQueen());
+                pieces.add(toPromote.promoteToQueen());
             } else {
                 return;
             }
-            pieces.remove(toConvert);
+            pieces.remove(toPromote);
             pawnConversionCanvas.setVisible(false);
             piecesCanvas.toFront();
         });
     }
 
-    private void showConversionOptions() {
+    private void showPromotionOptions() {
         pawnConversionCanvas.setVisible(true);
         pawnConversionCanvas.toFront();
-        int imgRow = toConvert.getColor() == WHITE ? 0 : 1;
+        int imgRow = toPromote.getColor() == WHITE ? 0 : 1;
         conversionGC.fillRect(0, 0, SCREEN_DIMENSION, SCREEN_DIMENSION);
         conversionGC.drawImage(IMAGE_PIECES, ROOK_IMG_START_X, imgRow * PIECE_IMG_HEIGHT,
-                PIECE_IMG_WIDTH, PIECE_IMG_HEIGHT, CONVERSION_OPTION_OFFSET_X, CONVERSION_OPTION_OFFSET_Y,
-                CONVERSION_OPTION_IMG_SIZE, CONVERSION_OPTION_IMG_SIZE);
+                PIECE_IMG_WIDTH, PIECE_IMG_HEIGHT, PROMOTION_OPTION_OFFSET_X, PROMOTION_OPTION_OFFSET_Y,
+                PROMOTION_OPTION_IMG_SIZE, PROMOTION_OPTION_IMG_SIZE);
         conversionGC.drawImage(IMAGE_PIECES, KNIGHT_IMG_START_X, imgRow * PIECE_IMG_HEIGHT,
-                PIECE_IMG_WIDTH, PIECE_IMG_HEIGHT, CONVERSION_OPTION_OFFSET_X + CONVERSION_OPTION_IMG_SIZE, CONVERSION_OPTION_OFFSET_Y,
-                CONVERSION_OPTION_IMG_SIZE, CONVERSION_OPTION_IMG_SIZE);
+                PIECE_IMG_WIDTH, PIECE_IMG_HEIGHT, PROMOTION_OPTION_OFFSET_X + PROMOTION_OPTION_IMG_SIZE, PROMOTION_OPTION_OFFSET_Y,
+                PROMOTION_OPTION_IMG_SIZE, PROMOTION_OPTION_IMG_SIZE);
         conversionGC.drawImage(IMAGE_PIECES, BISHOP_IMG_START_X, imgRow * PIECE_IMG_HEIGHT,
-                PIECE_IMG_WIDTH, PIECE_IMG_HEIGHT, CONVERSION_OPTION_OFFSET_X, CONVERSION_OPTION_OFFSET_Y + CONVERSION_OPTION_IMG_SIZE,
-                CONVERSION_OPTION_IMG_SIZE, CONVERSION_OPTION_IMG_SIZE);
+                PIECE_IMG_WIDTH, PIECE_IMG_HEIGHT, PROMOTION_OPTION_OFFSET_X, PROMOTION_OPTION_OFFSET_Y + PROMOTION_OPTION_IMG_SIZE,
+                PROMOTION_OPTION_IMG_SIZE, PROMOTION_OPTION_IMG_SIZE);
         conversionGC.drawImage(IMAGE_PIECES, QUEEN_IMG_START_X, imgRow * PIECE_IMG_HEIGHT,
-                PIECE_IMG_WIDTH, PIECE_IMG_HEIGHT, CONVERSION_OPTION_OFFSET_X + CONVERSION_OPTION_IMG_SIZE, CONVERSION_OPTION_OFFSET_Y + CONVERSION_OPTION_IMG_SIZE,
-                CONVERSION_OPTION_IMG_SIZE, CONVERSION_OPTION_IMG_SIZE);
+                PIECE_IMG_WIDTH, PIECE_IMG_HEIGHT, PROMOTION_OPTION_OFFSET_X + PROMOTION_OPTION_IMG_SIZE, PROMOTION_OPTION_OFFSET_Y + PROMOTION_OPTION_IMG_SIZE,
+                PROMOTION_OPTION_IMG_SIZE, PROMOTION_OPTION_IMG_SIZE);
     }
 
     private void initController() {
@@ -219,14 +227,12 @@ public class Game extends Application {
             for (ChessPiece piece : pieces) {
                 if (getBoundary(piece).contains(e.getX(), e.getY())) {
                     if (piece != selectedPiece) {
-                        if (whiteTurn && piece.getColor() == WHITE) {
+                        if ((whiteTurn && piece.getColor() == WHITE) || (!whiteTurn && piece.getColor() == BLACK)) {
                             selectedPiece = piece;
-                            break;
-                        } else if (!whiteTurn && piece.getColor() == BLACK) {
-                            selectedPiece = piece;
-                            break;
+                            //break;
                         }
                     }
+                    piece.setHighlighted(false);
                 }
             }
             if (selectedPiece != null) {
@@ -234,8 +240,8 @@ public class Game extends Application {
                 int col = getCellIndex(e.getX());
                 if (selectedPiece.move(row, col, pieces)) {
                     if (selectedPiece instanceof Pawn && ((Pawn) selectedPiece).reachedLastRow()) {
-                        toConvert = (Pawn) selectedPiece;
-                        showConversionOptions();
+                        toPromote = (Pawn) selectedPiece;
+                        showPromotionOptions();
                     }
                     whiteTurn = !whiteTurn;
                     selectedPiece = null;
@@ -245,14 +251,14 @@ public class Game extends Application {
     }
 
     private int getCellIndex(double y) {
-        int row = 0;
+        int index = 0;
         for (int i = 0; i < 8; i++) {
             if (y > i * CELL_SIZE && y < (i + 1) * CELL_SIZE) {
-                row = i;
+                index = i;
                 break;
             }
         }
-        return row;
+        return index;
     }
 
     private void initChessPieces() {
