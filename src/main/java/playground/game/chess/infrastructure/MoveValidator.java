@@ -14,7 +14,7 @@ public class MoveValidator {
             Iterator<ChessPiece> iter = pieces.iterator();
             while (iter.hasNext()) {
                 ChessPiece piece = iter.next();
-                if (selectedPiece == piece)
+                if (selectedPiece == piece || piece.captured)
                     continue;
                 if (row - selectedPiece.row > 0) {
                     if (piece.row < row && piece.row > selectedPiece.row) {
@@ -53,7 +53,7 @@ public class MoveValidator {
             Iterator<ChessPiece> iter = pieces.iterator();
             while (iter.hasNext()) {
                 ChessPiece piece = iter.next();
-                if (selectedPiece == piece)
+                if (selectedPiece == piece || piece.captured)
                     continue;
                 if (row - selectedPiece.row > 0) {
                     if (piece.col == selectedPiece.col && piece.row < row && piece.row > selectedPiece.row) {
@@ -81,35 +81,48 @@ public class MoveValidator {
         return false;
     }
 
+    /**
+     * Validates that the King is not in check.
+     */
     public static boolean validateNotChecked(King king, List<ChessPiece> pieces) {
         boolean notChecked = true;
 
         Iterator<ChessPiece> iter = pieces.iterator();
         while (iter.hasNext()) {
             ChessPiece piece = iter.next();
+
+            if (piece.captured) continue;
+
             if (piece.isMoveValid(king.row, king.col, pieces, false)) {
                 if (king.isEnemy(piece)) {
                     piece.highlighted = true;
                     notChecked = false;
                 }
-            } /*else {
-                piece.highlighted = false;
-            }*/
+            }
         }
         return notChecked;
     }
 
+    /**
+     * Is called to validate the new cell for selected piece
+     * is vacant or has an enemy piece (which is going to be captured).
+     */
     public static boolean validate(ChessPiece selected, List<ChessPiece> pieces, int row, int col) {
         Iterator<ChessPiece> iter = pieces.iterator();
         while (iter.hasNext()) {
             ChessPiece piece = iter.next();
-            if (selected == piece) continue;
+            if (selected == piece || piece.captured) continue;
             if (piece.col == col && piece.row == row)
                 return selected.isEnemy(piece);
         }
         return true;
     }
 
+    /**
+     * Validates whether the ('physically' valid) move is possible:
+     * after the move is done the king of the same color as the piece to be moved
+     * shouldn't be in check.
+     */
     public static boolean validateComplete(ChessPiece selected, King king, List<ChessPiece> pieces, int newRow, int newCol) {
         int prevCol = selected.col;
         int prevRow = selected.row;
@@ -121,6 +134,9 @@ public class MoveValidator {
         Iterator<ChessPiece> iter = pieces.iterator();
         while (iter.hasNext()) {
             ChessPiece piece = iter.next();
+
+            if (piece.captured) continue;
+
             if (selected.isEnemy(piece) && piece.col == selected.col && piece.row == selected.row) {
                 iter.remove();
                 deleted = piece;
@@ -140,10 +156,17 @@ public class MoveValidator {
         return notChecked;
     }
 
+    public static boolean validateNotMate(ChessPiece.Color color, List<ChessPiece> pieces) {
+        // if there is a valid (complete) move - it's not a mate.
+        for (ChessPiece piece : pieces) {
+            if (piece.captured || piece.color != color) continue;
+            if (piece.availableMoves(pieces).size() > 0) return true;
+        }
+        return false;
+    }
+
     protected static King getKing(ChessPiece.Color color, List<ChessPiece> pieces) {
-        Iterator<ChessPiece> iter = pieces.iterator();
-        while (iter.hasNext()) {
-            ChessPiece piece = iter.next();
+        for (ChessPiece piece : pieces) {
             if (piece instanceof King && piece.color == color)
                 return (King) piece;
         }

@@ -1,7 +1,7 @@
 package playground.game.chess.infrastructure;
 
 import java.io.Serializable;
-import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ChessPiece implements Serializable {
@@ -14,7 +14,15 @@ public abstract class ChessPiece implements Serializable {
     protected int row;
     protected int col;
 
+    // Used to check whether piece moved or not
     protected boolean moved = false;
+
+    // If set to true marks piece as inactive
+    protected boolean captured = false;
+
+    // The property is intended to be used as a marker
+    // for specific reasons (e.g. the piece checking a king).
+    // It is not required.
     protected boolean highlighted = false;
 
     public ChessPiece(Color color, int row, int col) {
@@ -34,6 +42,7 @@ public abstract class ChessPiece implements Serializable {
         return false;
     }
 
+    // Determine if the move is valid.
     protected abstract boolean isMoveValid(int row, int col, List<ChessPiece> pieces, boolean doesMovement);
 
     public boolean isEnemy(ChessPiece another) {
@@ -47,16 +56,20 @@ public abstract class ChessPiece implements Serializable {
 
     /**
      * The method to be called after the move IS validated.
-     * Capture the piece - physically remove it from game.
+     * Capture the piece - remove it from the board.
      */
     protected void capture(List<ChessPiece> pieces) {
-        Iterator<ChessPiece> iter = pieces.iterator();
-        while (iter.hasNext()) {
-            ChessPiece piece = iter.next();
-            if (this == piece) continue;
-            if (piece.row == this.row && piece.col == this.col)
-                iter.remove();
+        for (ChessPiece piece : pieces) {
+            if (this == piece || piece.captured) continue;
+            if (piece.row == this.row && piece.col == this.col) {
+                piece.captured = true;
+                break;
+            }
         }
+    }
+
+    public boolean isCaptured() {
+        return captured;
     }
 
     public boolean isHighlighted() {
@@ -77,5 +90,15 @@ public abstract class ChessPiece implements Serializable {
 
     public int getRow() {
         return row;
+    }
+
+    public List<Move> availableMoves(List<ChessPiece> pieces) {
+        List<Move> moves = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (isMoveValid(i, j, pieces, true)) moves.add(new Move(row, col, i, j));
+            }
+        }
+        return moves;
     }
 }

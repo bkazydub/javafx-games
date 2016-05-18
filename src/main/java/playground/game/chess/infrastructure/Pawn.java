@@ -22,9 +22,7 @@ public class Pawn extends ChessPiece {
                 Iterator<ChessPiece> iter = pieces.iterator();
                 while (iter.hasNext()) {
                     ChessPiece piece = iter.next();
-                    if (this == piece) {
-                        continue;
-                    }
+                    if (this == piece || piece.captured) continue;
                     if (row - this.row == (this.startRow == 1 ? 1 : -1)) {
                         if (piece.row == row && piece.col == col) {
                             if (isEnemy(piece)) {
@@ -43,6 +41,9 @@ public class Pawn extends ChessPiece {
             Iterator<ChessPiece> iter = pieces.iterator();
             while (iter.hasNext()) {
                 ChessPiece piece = iter.next();
+
+                if (piece.captured) continue;
+
                 // disable moving to occupied cells.
                 if (piece.row == row && piece.col == col)
                     return false;
@@ -85,6 +86,6 @@ public class Pawn extends ChessPiece {
     }
 
     public boolean reachedLastRow() {
-        return startRow == 1 ? row == 7 : row == 0;
+        return row == (startRow == 1 ? 7 : 0);
     }
 }
