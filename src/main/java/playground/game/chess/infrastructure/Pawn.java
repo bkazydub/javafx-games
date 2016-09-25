@@ -1,91 +1,87 @@
 package playground.game.chess.infrastructure;
 
-import java.util.Iterator;
 import java.util.List;
 
-/**
- * Created by dragonmf on 4/17/16.
- */
 public class Pawn extends ChessPiece {
 
-    private final int startRow;
+    // Starting rank for the piece (for detecting the last rank)
+    private final int startRank;
 
-    public Pawn(Color color, int row, int col) {
-        super(color, row, col);
-        startRow = row;
+    public Pawn(Color color, int rank, int file) {
+        super(color, rank, file);
+        startRank = rank;
     }
 
     // todo: add en passant option
     @Override
-    protected boolean isMoveValid(int row, int col, List<ChessPiece> pieces, boolean doesMovement) {
-            if (Math.abs(col - this.col) == 1) {
-                Iterator<ChessPiece> iter = pieces.iterator();
-                while (iter.hasNext()) {
-                    ChessPiece piece = iter.next();
+    protected boolean isMoveValid(int rank, int file, List<ChessPiece> pieces, boolean doesMovement) {
+            if (Math.abs(file - this.file) == 1) {
+                for (ChessPiece piece : pieces) {
                     if (this == piece || piece.captured) continue;
-                    if (row - this.row == (this.startRow == 1 ? 1 : -1)) {
-                        if (piece.row == row && piece.col == col) {
+                    if (rank - this.rank == (this.startRank == 1 ? 1 : -1)) {
+                        if (piece.rank == rank && piece.file == file) {
                             if (isEnemy(piece)) {
                                 if (doesMovement)
-                                    return MoveValidator.validateComplete(this, MoveValidator.getKing(this.color, pieces), pieces, row, col);
-                                else return MoveValidator.validate(this, pieces, row, col);
+                                    return MoveValidator.validateComplete(this, MoveValidator.getKing(this.color, pieces), pieces, rank, file);
+                                else return MoveValidator.validate(this, pieces, rank, file);
                             }
                         }
                     }
                 }
             }
 
-            if (col - this.col != 0)
+            if (file - this.file != 0)
                 return false;
 
-            Iterator<ChessPiece> iter = pieces.iterator();
-            while (iter.hasNext()) {
-                ChessPiece piece = iter.next();
-
+            for (ChessPiece piece : pieces) {
                 if (piece.captured) continue;
 
-                // disable moving to occupied cells.
-                if (piece.row == row && piece.col == col)
+                // disable movement to occupied cells.
+                if (piece.rank == rank && piece.file == file)
                     return false;
                 // disable 'jumping' over other pieces
-                if (piece.row == (this.startRow == 1 ? this.row + 1 : this.row - 1) && this.col == piece.col)
+                if (piece.rank == (this.startRank == 1 ? this.rank + 1 : this.rank - 1) && this.file == piece.file)
                     return false;
             }
 
-            if (startRow == 1) {
-                if (row - this.row > 0 && row - this.row < (moved ? 2 : 3)) {
+            if (startRank == 1) {
+                if (rank - this.rank > 0 && rank - this.rank < (moved ? 2 : 3)) {
                     if (doesMovement)
-                        return MoveValidator.validateComplete(this, MoveValidator.getKing(this.color, pieces), pieces, row, col);
-                    else return MoveValidator.validate(this, pieces, row, col);
+                        return MoveValidator.validateComplete(this, MoveValidator.getKing(this.color, pieces), pieces, rank, file);
+                    else return MoveValidator.validate(this, pieces, rank, file);
                 }
-            } else if (startRow == 6) {
-                if (row - this.row < 0 && row - this.row > (moved ? -2 : -3)) {
+            } else if (startRank == 6) {
+                if (rank - this.rank < 0 && rank - this.rank > (moved ? -2 : -3)) {
                     if (doesMovement)
-                        return MoveValidator.validateComplete(this, MoveValidator.getKing(this.color, pieces), pieces, row, col);
-                    else return MoveValidator.validate(this, pieces, row, col);
+                        return MoveValidator.validateComplete(this, MoveValidator.getKing(this.color, pieces), pieces, rank, file);
+                    else return MoveValidator.validate(this, pieces, rank, file);
                 }
             }
 
             return false;
     }
 
-    public ChessPiece promoteToRook() {
-        return new Rook(color, row, col);
+    public Rook promoteToRook() {
+        return new Rook(color, rank, file);
     }
 
-    public ChessPiece promoteToKnight() {
-        return new Knight(color, row, col);
+    public Knight promoteToKnight() {
+        return new Knight(color, rank, file);
     }
 
-    public ChessPiece promoteToBishop() {
-        return new Bishop(color, row, col);
+    public Bishop promoteToBishop() {
+        return new Bishop(color, rank, file);
     }
 
-    public ChessPiece promoteToQueen() {
-        return new Queen(color, row, col);
+    public Queen promoteToQueen() {
+        return new Queen(color, rank, file);
     }
 
-    public boolean reachedLastRow() {
-        return row == (startRow == 1 ? 7 : 0);
+    /**
+     * Check if this pawn has reached the last rank and is capable of performing promotion.
+     * @return true if the last rank has been reached
+     */
+    public boolean reachedLastRank() {
+        return rank == (startRank == 1 ? 7 : 0);
     }
 }

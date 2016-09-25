@@ -8,35 +8,35 @@ import java.io.Serializable;
  */
 public class Move implements Serializable {
 
-    private final int row;
-    private final int col;
-    private final int newRow;
-    private final int newCol;
+    private final int rank;
+    private final int file;
+    private final int newRank;
+    private final int newFile;
 
     private ChessPiece promotedTo;
     private boolean capture;
 
-    public Move(int row, int col, int newRow, int newCol) {
-        this.row = row;
-        this.col = col;
-        this.newRow = newRow;
-        this.newCol = newCol;
+    public Move(int rank, int file, int newRank, int newFile) {
+        this.rank = rank;
+        this.file = file;
+        this.newRank = newRank;
+        this.newFile = newFile;
     }
 
-    public int getRow() {
-        return row;
+    public int getRank() {
+        return rank;
     }
 
-    public int getCol() {
-        return col;
+    public int getFile() {
+        return file;
     }
 
-    public int getNewRow() {
-        return newRow;
+    public int getNewRank() {
+        return newRank;
     }
 
-    public int getNewCol() {
-        return newCol;
+    public int getNewFile() {
+        return newFile;
     }
 
     public ChessPiece getPromotedTo() {

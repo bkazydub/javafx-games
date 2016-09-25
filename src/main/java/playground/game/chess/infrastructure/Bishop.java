@@ -2,9 +2,6 @@ package playground.game.chess.infrastructure;
 
 import java.util.List;
 
-/**
- * Created by dragonmf on 4/17/16.
- */
 public class Bishop extends ChessPiece {
 
     public Bishop(Color color, int row, int col) {

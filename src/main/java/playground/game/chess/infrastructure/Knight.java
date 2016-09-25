@@ -2,24 +2,21 @@ package playground.game.chess.infrastructure;
 
 import java.util.List;
 
-/**
- * Created by dragonmf on 4/17/16.
- */
 public class Knight extends ChessPiece {
 
-    public Knight(Color color, int row, int col) {
-        super(color, row, col);
+    public Knight(Color color, int rank, int file) {
+        super(color, rank, file);
     }
 
     @Override
-    protected boolean isMoveValid(int row, int col, List<ChessPiece> pieces, boolean doesMovement) {
-        if ((Math.abs(this.row - row) == 2 && Math.abs(this.col - col) == 1)
-                || (Math.abs(this.row - row) == 1 && Math.abs(this.col - col) == 2)) {
+    protected boolean isMoveValid(int rank, int file, List<ChessPiece> pieces, boolean doesMovement) {
+        if ((Math.abs(this.rank - rank) == 2 && Math.abs(this.file - file) == 1)
+                || (Math.abs(this.rank - rank) == 1 && Math.abs(this.file - file) == 2)) {
 
-            boolean valid = MoveValidator.validate(this, pieces, row, col);
+            boolean valid = MoveValidator.validate(this, pieces, rank, file);
             if (!valid) return false;
 
-            return doesMovement ? (MoveValidator.validateComplete(this, MoveValidator.getKing(this.color, pieces), pieces, row, col) && valid) : valid;
+            return doesMovement ? (MoveValidator.validateComplete(this, MoveValidator.getKing(this.color, pieces), pieces, rank, file) && valid) : valid;
         }
         return false;
     }

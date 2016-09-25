@@ -60,14 +60,11 @@ public class Game extends Application {
     private Stage waitingStage;
     private Scene menuScene;
     private Scene gameScene;
-    private Scene connectingScene;
-    private Scene waitingScene;
 
     private Label conErrorLabel;
 
     private State state = State.MENU;
 
-    private Canvas chessBoard;
     private GraphicsContext boardGC;
     private Canvas piecesCanvas;
     private GraphicsContext piecesGC;
@@ -79,7 +76,6 @@ public class Game extends Application {
     private boolean colorShown = false;
     private boolean showDCMessage = false;
 
-    private Canvas highlightCanvas;
     private GraphicsContext highlightGC;
 
     private long gameStart;
@@ -127,9 +123,11 @@ public class Game extends Application {
     private Move lastMove = null;
     private Move opponentMove = null;
 
-    private List<ChessPiece> pieces = new ArrayList<>();
+    private final List<ChessPiece> pieces = new ArrayList<>();
 
+    // history of your moves
     private List<Move> yourMoves = new ArrayList<>();
+    // history of your opponent moves
     private List<Move> opponentMoves = new ArrayList<>();
 
     // menu
@@ -157,7 +155,7 @@ public class Game extends Application {
         initConnectDialog();
         initWaitDialog();
 
-        highlightCanvas = new Canvas(SCREEN_DIMENSION, SCREEN_DIMENSION);
+        Canvas highlightCanvas = new Canvas(SCREEN_DIMENSION, SCREEN_DIMENSION);
         highlightGC = highlightCanvas.getGraphicsContext2D();
         highlightGC.setGlobalAlpha(0.5);
 
@@ -167,7 +165,7 @@ public class Game extends Application {
         StackPane root = new StackPane();
         gameScene = new Scene(root, SCREEN_DIMENSION, SCREEN_DIMENSION);
 
-        chessBoard = new Canvas(SCREEN_DIMENSION, SCREEN_DIMENSION);
+        Canvas chessBoard = new Canvas(SCREEN_DIMENSION, SCREEN_DIMENSION);
         boardGC = chessBoard.getGraphicsContext2D();
 
         drawChessBoard();
@@ -242,7 +240,6 @@ public class Game extends Application {
                     lastRefresh = now;
 
                     piecesGC.clearRect(0, 0, SCREEN_DIMENSION, SCREEN_DIMENSION);
-                    //drawChessBoard();
 
                     highlightGC.clearRect(0, 0, SCREEN_DIMENSION, SCREEN_DIMENSION);
 
@@ -250,13 +247,13 @@ public class Game extends Application {
                         for (ChessPiece piece : pieces) {
                             if (!piece.isCaptured()) drawPiece(piece);
                             if (opponentMove != null) {
-                                highlightCell(opponentMove.getRow(), opponentMove.getCol(), Color.RED);
-                                highlightCell(opponentMove.getNewRow(), opponentMove.getNewCol(), Color.DARKRED);
+                                highlightCell(opponentMove.getRank(), opponentMove.getFile(), Color.RED);
+                                highlightCell(opponentMove.getNewRank(), opponentMove.getNewFile(), Color.DARKRED);
                             }
                             if (piece == selectedPiece) {
-                                highlightCell(piece.getRow(), piece.getCol(), Color.MEDIUMVIOLETRED);
+                                highlightCell(piece.getRank(), piece.getFile(), Color.MEDIUMVIOLETRED);
                                 for (Move available : piece.availableMoves(new ArrayList<>(pieces))) {
-                                    highlightCell(available.getNewRow(), available.getNewCol(), Color.GREEN);
+                                    highlightCell(available.getNewRank(), available.getNewFile(), Color.GREEN);
                                 }
                             }
                             /*if (piece.isHighlighted()) {
@@ -338,8 +335,8 @@ public class Game extends Application {
         else if (piece instanceof Pawn)
             x = PAWN_IMG_START_X;
         piecesGC.drawImage(IMAGE_PIECES, x, imgRow * PIECE_IMG_HEIGHT,
-                PIECE_IMG_WIDTH, PIECE_IMG_HEIGHT, piece.getCol() * Game.CELL_SIZE,
-                piece.getRow() * Game.CELL_SIZE, Game.CELL_SIZE, Game.CELL_SIZE);
+                PIECE_IMG_WIDTH, PIECE_IMG_HEIGHT, piece.getFile() * Game.CELL_SIZE,
+                piece.getRank() * Game.CELL_SIZE, Game.CELL_SIZE, Game.CELL_SIZE);
     }
 
     private void initPromotionLayer() {
@@ -374,7 +371,7 @@ public class Game extends Application {
                     try {
                         out.writeObject(lastMove);
                     } catch (IOException ie) {
-                        System.err.println("IOException: " + ie.getMessage());
+                        System.err.println("Unable to transfer movement object. Reason: " + ie.getMessage());
                     }
                 }
                 pawnPromotionCanvas.setVisible(false);
@@ -390,23 +387,25 @@ public class Game extends Application {
                     if (getBoundary(piece).contains(e.getX(), e.getY())) {
                         if (piece != selectedPiece && !piece.isCaptured()) {
                             if (state == State.STANDALONE) {
-                                if ((whiteTurn && piece.getColor() == WHITE) || (!whiteTurn && piece.getColor() == BLACK)) {
+                                if ((whiteTurn && piece.getColor() == WHITE)
+                                        || (!whiteTurn && piece.getColor() == BLACK)) {
                                     selectedPiece = piece;
                                 }
-                            } else if ((whiteTurn && piece.getColor() == WHITE && yourColor == WHITE) || (!whiteTurn && piece.getColor() == BLACK && yourColor == BLACK)) {
+                            } else if ((whiteTurn && piece.getColor() == WHITE && yourColor == WHITE)
+                                    || (!whiteTurn && piece.getColor() == BLACK && yourColor == BLACK)) {
                                 selectedPiece = piece;
                             }
                         }
                     }
                 }
                 if (selectedPiece != null) {
-                    int row = selectedPiece.getRow();
-                    int col = selectedPiece.getCol();
+                    int row = selectedPiece.getRank();
+                    int col = selectedPiece.getFile();
                     int newRow = getCellIndex(e.getY());
                     int newCol = getCellIndex(e.getX());
                     if (selectedPiece.move(newRow, newCol, pieces)) {
                         if (state == State.STANDALONE) {
-                            if (selectedPiece instanceof Pawn && ((Pawn) selectedPiece).reachedLastRow()) {
+                            if (selectedPiece instanceof Pawn && ((Pawn) selectedPiece).reachedLastRank()) {
                                 toPromote = (Pawn) selectedPiece;
                                 showPromotionOptions();
                             }
@@ -415,7 +414,7 @@ public class Game extends Application {
                         } else if (state == State.SERVER || state == State.CLIENT) {
                             lastMove = new Move(row, col, newRow, newCol);
                             yourMoves.add(lastMove);
-                            if (selectedPiece instanceof Pawn && ((Pawn) selectedPiece).reachedLastRow()) {
+                            if (selectedPiece instanceof Pawn && ((Pawn) selectedPiece).reachedLastRank()) {
                                 toPromote = (Pawn) selectedPiece;
                                 showPromotionOptions();
                                 return;
@@ -460,15 +459,15 @@ public class Game extends Application {
     }
 
     private static Rectangle2D getBoundary(ChessPiece piece) {
-        return new Rectangle2D(piece.getCol() * CELL_SIZE, piece.getRow() * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+        return new Rectangle2D(piece.getFile() * CELL_SIZE, piece.getRank() * CELL_SIZE, CELL_SIZE, CELL_SIZE);
     }
 
     private static double getPieceX(ChessPiece piece) {
-        return piece.getCol() * CELL_SIZE;
+        return piece.getFile() * CELL_SIZE;
     }
 
     private static double getPieceY(ChessPiece piece) {
-        return piece.getRow() * CELL_SIZE;
+        return piece.getRank() * CELL_SIZE;
     }
 
     private int getCellIndex(double z) {
@@ -533,21 +532,19 @@ public class Game extends Application {
                         gameStart = System.nanoTime();
                     } else if (data instanceof Move) {
                         Move move = (Move) data;
-                        if (move != null) {
-                            opponentMove = move;
-                            opponentMoves.add(opponentMove);
+                        opponentMove = move;
+                        opponentMoves.add(opponentMove);
 
-                            synchronized (pieces) {
-                                for (ChessPiece piece : pieces) {
-                                    if (piece.getCol() == move.getCol() && piece.getRow() == move.getRow() && !piece.isCaptured()) {
-                                        piece.move(move.getNewRow(), move.getNewCol(), pieces);
-                                        if (move.getPromotedTo() != null) {
-                                            pieces.remove(piece);
-                                            pieces.add(move.getPromotedTo());
-                                        }
-                                        whiteTurn = !whiteTurn;
-                                        break;
+                        synchronized (pieces) {
+                            for (ChessPiece piece : pieces) {
+                                if (piece.getFile() == move.getFile() && piece.getRank() == move.getRank() && !piece.isCaptured()) {
+                                    piece.move(move.getNewRank(), move.getNewFile(), pieces);
+                                    if (move.getPromotedTo() != null) {
+                                        pieces.remove(piece);
+                                        pieces.add(move.getPromotedTo());
                                     }
+                                    whiteTurn = !whiteTurn;
+                                    break;
                                 }
                             }
                         }
@@ -568,11 +565,21 @@ public class Game extends Application {
         });
     }
 
-    private void highlightCell(int row, int col, Color color) {
+    /**
+     * Fill a cell with specified color.
+     * @param rank cell row
+     * @param file cell column
+     * @param color filling color
+     */
+    private void highlightCell(int rank, int file, Color color) {
         highlightGC.setFill(color);
-        highlightGC.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+        highlightGC.fillRect(file * CELL_SIZE, rank * CELL_SIZE, CELL_SIZE, CELL_SIZE);
     }
 
+    /**
+     * Show checkmate message.
+     * @param color text message color. Green if you won and red otherwise.
+     */
     private void showMate(Color color) {
         double w = infoCanvas.getWidth(), h = infoCanvas.getHeight();
         infoGC.setFill(color);
@@ -582,6 +589,9 @@ public class Game extends Application {
         infoCanvas.toFront();
     }
 
+    /**
+     * Notify player with color he plays
+     */
     private void showColor() {
         if (yourColor != null) {
             double w = infoCanvas.getWidth(), h = infoCanvas.getHeight();
@@ -600,11 +610,17 @@ public class Game extends Application {
         }
     }
 
+    /**
+     * Hide color notification.
+     */
     private void hideColor() {
         infoCanvas.setVisible(false);
         piecesCanvas.toFront();
     }
 
+    /**
+     * Show message informing that an opponent has disconnected from the game.
+     */
     private void showOpponentDisconnectedMessage() {
         double w = infoCanvas.getWidth(), h = infoCanvas.getHeight();
         infoCanvas.setVisible(true);
@@ -647,6 +663,10 @@ public class Game extends Application {
         }
     }
 
+    /**
+     * Initialize menu.
+     * @return initialized menu pane
+     */
     private Parent createMenuContent() {
 
         GridPane root = new GridPane();
@@ -672,7 +692,7 @@ public class Game extends Application {
 
         create.setOnActivate(() -> {
             ExecutorService service = Executors.newSingleThreadExecutor();
-            service.execute(() -> startServer());
+            service.execute(this::startServer);
             waitingStage.show();
         });
         connect.setOnActivate(() -> connectingStage.show());
@@ -695,6 +715,9 @@ public class Game extends Application {
         return (MenuItem) menuBox.getChildren().get(index);
     }
 
+    /**
+     * Initialize dialog window needed to be able to connect to a server.
+     */
     private void initConnectDialog() {
         Label label = new Label("Enter IP to connect to: ");
         label.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
@@ -718,7 +741,7 @@ public class Game extends Application {
             if (ip != null && !ip.isEmpty()) {
                 host = ip;
                 ExecutorService service = Executors.newSingleThreadExecutor();
-                service.execute(() -> startClient());
+                service.execute(this::startClient);
             }
         });
 
@@ -733,7 +756,7 @@ public class Game extends Application {
         root.add(cancel, 0, 2);
         root.add(connect, 1, 2);
 
-        connectingScene = new Scene(root);
+        Scene connectingScene = new Scene(root);
         connectingStage = new Stage();
         connectingStage.setOnCloseRequest(cancelEvent);
         connectingStage.setScene(connectingScene);
@@ -742,6 +765,10 @@ public class Game extends Application {
         connectingStage.initModality(Modality.WINDOW_MODAL);
     }
 
+    /**
+     * Initialize dialog window that informs a player, which has started a
+     * game, that opponent has not yet connected. Or allows canceling the wait.
+     */
     private void initWaitDialog() {
         Label waitingLabel = new Label("Waiting for worthy opponent");
         Button cancel = new Button("Cancel");
@@ -761,7 +788,7 @@ public class Game extends Application {
         VBox vb = new VBox(10, waitingLabel, cancel);
         vb.setAlignment(Pos.CENTER);
         vb.setPrefSize(200, 100);
-        waitingScene = new Scene(vb);
+        Scene waitingScene = new Scene(vb);
 
         waitingStage = new Stage();
         waitingStage.setOnCloseRequest(cancelEvent);
@@ -771,6 +798,9 @@ public class Game extends Application {
         waitingStage.initModality(Modality.WINDOW_MODAL);
     }
 
+    /**
+     * Initialize game menu.
+     */
     private void initMenu() {
         menuScene = new Scene(createMenuContent());
 
